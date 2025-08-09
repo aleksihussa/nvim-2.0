@@ -29,6 +29,7 @@ opt.wildmenu = true
 
 -- UI
 opt.cursorline = true
+opt.clipboard = "unnamedplus"
 opt.laststatus = 2
 opt.list = true
 opt.listchars = {

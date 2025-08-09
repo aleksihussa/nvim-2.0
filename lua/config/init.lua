@@ -1,53 +1,31 @@
--- Bootstrap lazy.nvim
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  local lazyrepo = "https://github.com/folke/lazy.nvim.git"
-  local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
-  if vim.v.shell_error ~= 0 then
-    vim.api.nvim_echo({
-      { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
-
-      { out,                            "WarningMsg" },
-      { "\nPress any key to exit..." },
-    }, true, {})
-    vim.fn.getchar()
-    os.exit(1)
-  end
-end
-vim.opt.rtp:prepend(lazypath)
-
+-- 0) Leaders ASAP
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
+-- 1) Core options ONLY (no colorscheme, no plugin calls)
+pcall(require, "config.options")
 
--- Setup lazy.nvim
+-- 2) Bootstrap + prepend lazy
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable",
+    "https://github.com/folke/lazy.nvim.git", lazypath })
+end
+vim.opt.rtp:prepend(lazypath)
+
+-- 3) Lazy setup (plugins)
 require("lazy").setup({
-  spec = {
-    -- import your plugins
-    { import = "plugins" },
-  },
-  defaults = {
-    lazy = false,
-    -- Don't automatically install new plugin versions
-    version = nil
-  },
-
-
+  spec = { { import = "plugins" } },
+  defaults = { lazy = false, version = nil },
   install = { colorscheme = { "catppuccin" } },
-  -- automatically check for plugin updates
-  checker = { enabled = true },
+  checker = { enabled = false, notify = false }, -- <- silence updates
 })
 
-local modules = {
-  "config.options",
-  "config.autocmds",
-  "config.keymaps",
-}
+-- 4) Set theme
+pcall(vim.cmd.colorscheme, "catppuccin")
 
-for _, mod in ipairs(modules) do
+-- 5) Rest
+for _, mod in ipairs({ "config.autocmds", "config.keymaps" }) do
   local ok, err = pcall(require, mod)
-
-  if not ok then
-    vim.notify("Error loading " .. mod .. "\n\n" .. err, vim.log.levels.ERROR)
-  end
+  if not ok then vim.notify("Error loading " .. mod .. "\n\n" .. err, vim.log.levels.ERROR) end
 end
